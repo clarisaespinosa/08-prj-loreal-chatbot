@@ -1,34 +1,25 @@
-// URL del Worker (no cambies esto)
 const WORKER_URL = "https://calm-wood-5b06.clarisa-espinosa01.workers.dev";
 
-// Elementos del DOM
 const chat = document.getElementById("chat");
 const form = document.getElementById("chat-form");
 const input = document.getElementById("prompt");
 
-// Escuchar envío del formulario
 form.addEventListener("submit", async (e) => {
   e.preventDefault();
-
   const userText = input.value.trim();
   if (!userText) return;
 
-  // Mostrar mensaje del usuario
   chat.innerHTML += `<div class="message user">${userText}</div>`;
   input.value = "";
-
-  // Desplazar hacia abajo
   chat.scrollTop = chat.scrollHeight;
 
   try {
-    // Enviar el prompt correctamente en formato JSON
     const response = await fetch(WORKER_URL, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ prompt: userText }), // 👈 importante
+      body: JSON.stringify({ prompt: userText }), // 👈 enviar solo el prompt
     });
 
-    // Intentar leer la respuesta
     const data = await response.json();
 
     if (data.error) {
