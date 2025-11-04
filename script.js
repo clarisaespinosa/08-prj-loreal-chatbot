@@ -1,5 +1,3 @@
-const apiKey = "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"; // replace with your key
-
 // Get references to DOM elements
 const chat = document.getElementById("chat");
 const form = document.getElementById("chat-form");
@@ -15,20 +13,16 @@ form.addEventListener("submit", async (e) => {
   // Show user message
   chat.innerHTML += `<div class="message user">${userText}</div>`;
   input.value = "";
-
-  // Scroll to bottom
   chat.scrollTop = chat.scrollHeight;
 
   try {
-    // Send message to OpenAI
-    const response = await fetch("https://api.openai.com/v1/chat/completions", {
+    // 🔗 Send message to your Cloudflare Worker (not directly to OpenAI)
+    const response = await fetch("https://calm-wood-5b06.clarisa-espinosa01.workers.dev", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        "Authorization": `Bearer ${apiKey}`,
       },
       body: JSON.stringify({
-        model: "gpt-4o",
         messages: [
           {
             role: "system",
@@ -42,11 +36,14 @@ form.addEventListener("submit", async (e) => {
 
     const data = await response.json();
 
+    // Show response
     if (data.error) {
       chat.innerHTML += `<div class="message bot">⚠️ ${data.error.message}</div>`;
-    } else {
+    } else if (data.choices && data.choices[0]?.message?.content) {
       const reply = data.choices[0].message.content;
       chat.innerHTML += `<div class="message bot">${reply}</div>`;
+    } else {
+      chat.innerHTML += `<div class="message bot">⚠️ Unexpected response format.</div>`;
     }
   } catch (error) {
     chat.innerHTML += `<div class="message bot">❌ Error: ${error.message}</div>`;
@@ -55,6 +52,7 @@ form.addEventListener("submit", async (e) => {
   // Scroll to bottom again
   chat.scrollTop = chat.scrollHeight;
 });
+
 
 
 
