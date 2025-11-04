@@ -1,55 +1,47 @@
-// Get references to DOM elements
+// URL del Worker (no cambies esto)
+const WORKER_URL = "https://calm-wood-5b06.clarisa-espinosa01.workers.dev";
+
+// Elementos del DOM
 const chat = document.getElementById("chat");
 const form = document.getElementById("chat-form");
 const input = document.getElementById("prompt");
 
-// Listen for form submission
+// Escuchar envío del formulario
 form.addEventListener("submit", async (e) => {
-  e.preventDefault(); // Prevent page reload
+  e.preventDefault();
 
   const userText = input.value.trim();
   if (!userText) return;
 
-  // Show user message
+  // Mostrar mensaje del usuario
   chat.innerHTML += `<div class="message user">${userText}</div>`;
   input.value = "";
+
+  // Desplazar hacia abajo
   chat.scrollTop = chat.scrollHeight;
 
   try {
-    // 🔗 Send message to your Cloudflare Worker (not directly to OpenAI)
-    const response = await fetch("https://calm-wood-5b06.clarisa-espinosa01.workers.dev", {
+    // Enviar el prompt correctamente en formato JSON
+    const response = await fetch(WORKER_URL, {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        messages: [
-          {
-            role: "system",
-            content:
-              "You are a friendly, confident assistant representing L’Oréal. Speak elegantly and provide helpful advice about beauty and skincare.",
-          },
-          { role: "user", content: userText },
-        ],
-      }),
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ prompt: userText }), // 👈 importante
     });
 
+    // Intentar leer la respuesta
     const data = await response.json();
 
-    // Show response
     if (data.error) {
-      chat.innerHTML += `<div class="message bot">⚠️ ${data.error.message}</div>`;
-    } else if (data.choices && data.choices[0]?.message?.content) {
-      const reply = data.choices[0].message.content;
-      chat.innerHTML += `<div class="message bot">${reply}</div>`;
+      chat.innerHTML += `<div class="message bot">⚠️ ${data.error}</div>`;
+    } else if (data.reply) {
+      chat.innerHTML += `<div class="message bot">${data.reply}</div>`;
     } else {
-      chat.innerHTML += `<div class="message bot">⚠️ Unexpected response format.</div>`;
+      chat.innerHTML += `<div class="message bot">🤔 Unexpected response.</div>`;
     }
   } catch (error) {
     chat.innerHTML += `<div class="message bot">❌ Error: ${error.message}</div>`;
   }
 
-  // Scroll to bottom again
   chat.scrollTop = chat.scrollHeight;
 });
 
