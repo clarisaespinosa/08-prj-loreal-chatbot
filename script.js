@@ -17,18 +17,12 @@ form.addEventListener("submit", async (e) => {
     const response = await fetch(WORKER_URL, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ prompt: userText }), // 👈 enviar solo el prompt
+      body: JSON.stringify({ prompt: userText })
     });
 
     const data = await response.json();
 
-    if (data.error) {
-      chat.innerHTML += `<div class="message bot">⚠️ ${data.error}</div>`;
-    } else if (data.reply) {
-      chat.innerHTML += `<div class="message bot">${data.reply}</div>`;
-    } else {
-      chat.innerHTML += `<div class="message bot">🤔 Unexpected response.</div>`;
-    }
+    chat.innerHTML += `<div class="message bot">${data.reply}</div>`;
   } catch (error) {
     chat.innerHTML += `<div class="message bot">❌ Error: ${error.message}</div>`;
   }
