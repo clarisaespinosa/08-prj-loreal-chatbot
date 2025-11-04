@@ -1,56 +1,59 @@
+const apiKey = "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"; // replace with your key
+
+// Get references to DOM elements
 const chat = document.getElementById("chat");
 const form = document.getElementById("chat-form");
 const input = document.getElementById("prompt");
 
-// Tu API key (solo para pruebas locales)
-const OPENAI_KEY = "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";
-
-// Envía mensaje
+// Listen for form submission
 form.addEventListener("submit", async (e) => {
-  e.preventDefault();
-  const question = input.value.trim();
-  if (!question) return;
+  e.preventDefault(); // Prevent page reload
 
-  addMessage(question, "user");
+  const userText = input.value.trim();
+  if (!userText) return;
+
+  // Show user message
+  chat.innerHTML += `<div class="message user">${userText}</div>`;
   input.value = "";
 
-  // Muestra "typing..." mientras llega la respuesta
-  const typingMessage = addMessage("Typing...", "bot", true);
+  // Scroll to bottom
+  chat.scrollTop = chat.scrollHeight;
 
   try {
-    const reply = await getBotReply(question);
-    typingMessage.textContent = reply;
-  } catch {
-    typingMessage.textContent = "Oops 😅 — something went wrong!";
+    // Send message to OpenAI
+    const response = await fetch("https://api.openai.com/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${apiKey}`,
+      },
+      body: JSON.stringify({
+        model: "gpt-4o",
+        messages: [
+          {
+            role: "system",
+            content:
+              "You are a friendly, confident assistant representing L’Oréal. Speak elegantly and provide helpful advice about beauty and skincare.",
+          },
+          { role: "user", content: userText },
+        ],
+      }),
+    });
+
+    const data = await response.json();
+
+    if (data.error) {
+      chat.innerHTML += `<div class="message bot">⚠️ ${data.error.message}</div>`;
+    } else {
+      const reply = data.choices[0].message.content;
+      chat.innerHTML += `<div class="message bot">${reply}</div>`;
+    }
+  } catch (error) {
+    chat.innerHTML += `<div class="message bot">❌ Error: ${error.message}</div>`;
   }
+
+  // Scroll to bottom again
+  chat.scrollTop = chat.scrollHeight;
 });
 
-// Añade mensaje al chat
-function addMessage(text, type, isTemp = false) {
-  const div = document.createElement("div");
-  div.className = `message ${type}`;
-  div.textContent = text;
-  chat.appendChild(div);
-  chat.scrollTop = chat.scrollHeight;
-  return isTemp ? div : null;
-}
 
-// Llama a OpenAI directamente
-async function getBotReply(prompt) {
-  const response = await fetch("https://api.openai.com/v1/chat/completions", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "Authorization": `Bearer ${OPENAI_KEY}`
-    },
-    body: JSON.stringify({
-      model: "gpt-3.5-turbo",
-      messages: [{ role: "user", content: prompt }],
-      temperature: 0.7,
-      max_tokens: 150
-    })
-  });
-
-  const data = await response.json();
-  return data.choices[0].message.content;
-}
